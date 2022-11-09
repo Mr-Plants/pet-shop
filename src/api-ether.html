@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>API</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .box {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .btn {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <button type="button" class="btn btn-primary" onclick="connect_wallet()">连接 Metamask 钱包</button>
+    <button type="button" class="btn btn-primary" onclick="get_balance()">查询余额</button>
+    <button type="button" class="btn btn-primary" onclick="send_transaction()">发送交易</button>
+    <button type="button" class="btn btn-primary">部署智能合约</button>
+    <button type="button" class="btn btn-primary" onclick="get_block()">查询区块信息</button>
+    <button type="button" class="btn btn-primary" onclick="get_transaction()">查询交易信息</button>
+    <button type="button" class="btn btn-primary" onclick="get_adopters()">获取adopters</button>
+    <button type="button" class="btn btn-primary" onclick="adopt()">adopt</button>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<!-- 会导出一个全局的变量: ethers -->
+<script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js">
+</script>
+<script>
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    let Adoption, account, signer;
+
+    async function connect_wallet() {
+        if (typeof window.ethereum === "undefined") {
+            return alert('请安装钱包')
+        }
+
+    }
+
+    async function get_balance() {
+        const balance = await provider.getBalance(accounts[0]);
+        const balanceInETH = ethers.utils.formatEther(balance)
+        console.log(balance)
+        console.log(balanceInETH)
+    }
+
+    async function send_transaction() {
+        const tx = await signer.sendTransaction({
+            to: '0x5f53Cd0e3D78133a47a6e3D3c7ac2DF792d4FB16',
+            // value: ethers.utils.formatUnits("1.0")   // 1eth
+            value: ethers.BigNumber.from("500")   // 必须转换成bigNumber或者eth  500wei
+        })
+        console.log(tx)
+        // {
+        //     "hash": "0x36ec53728f6eba655f55cf21b5b62822939f71cee083fef6b6b7d2709fdf3c1d",
+        //     "blockHash": null,
+        //     "blockNumber": null,
+        //     "transactionIndex": null,
+        //     "confirmations": 0,
+        //     "from": "0xF1dEcd481fDF02C14C4294Ce7b997d15BaC3e3D1",
+        //     "gasPrice": {
+        //     "_hex": "0x4a817c800"
+        // },
+        //     "gasLimit": {
+        //     "_hex": "0x5208"
+        // },
+        //     "to": "0xe88D1E5CD5aE11ecAf554C8fA9E9560e9681B55B",
+        //     "value": {
+        //     "_hex": "0xde0b6b3a7640000"
+        // },
+        //     "nonce": 8,
+        //     "data": "0x",
+        //     "r": "0x2eafd40088b7131fd671f7c77934d8737797e07081b4a2184a13040121be0b04",
+        //     "s": "0x221ac4959281f14c0dfbb8f4cbd71cd6b976bf15dac6c1226efadd303f910ba6",
+        //     "v": 2710,
+        //     "creates": null,
+        //     "raw": "0xf86e088504a817c80082520894e88d1e5cd5ae11ecaf554c8fa9e9560e9681b55b880de0b6b3a764000080820a96a02eafd40088b7131fd671f7c77934d8737797e07081b4a2184a13040121be0b04a0221ac4959281f14c0dfbb8f4cbd71cd6b976bf15dac6c1226efadd303f910ba6",
+        //     "networkId": 1337,
+        //     "chainId": 1337
+        // }
+    }
+
+    async function get_transaction() {
+        const transactionHash = "0x6ef39c03f5628d00331f0a45a9634cdd2a7aa2cba373d91b78f619d0719784b7";
+        const transaction_detail = await provider.getTransaction(transactionHash);
+        console.log(transaction_detail)
+    }
+
+    async function get_block() {
+        const block_hash = "0x0c1c046fd348506a03adcf789f3eb5bed0a321178276bc9fa35e9defa407093f";
+        const block_detail = await provider.getBlock(block_hash);
+        console.log(block_detail)
+    }
+
+    async function init_contract() {
+        const data = await $.getJSON('Adoption.json');   // 获取合约json
+        await provider.send("eth_requestAccounts", []);
+        accounts = await provider.listAccounts();
+        signer = provider.getSigner(accounts[0]);
+        Adoption = new ethers.Contract('0x9c08538d450fE977eEaBEA744973a91D85238b5f', data.abi, signer);  // 根据ABI生成合约实例
+    }
+
+    async function adopt() {
+        const tx = await Adoption.adopt(1);
+        console.log(tx)
+    }
+
+    async function get_adopters() {
+        const adopters = await Adoption.getAdopters();
+        console.log(adopters)
+    }
+
+    init_contract()
+
+
+</script>
+</body>
+</html>
